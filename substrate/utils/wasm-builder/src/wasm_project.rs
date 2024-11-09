@@ -852,7 +852,7 @@ fn build_bloaty_blob(
 
 	build_cmd
 		.arg("rustc")
-		.arg(format!("--target={}", target.rustc_target()))
+		.arg(format!("--target={}", target.value()))
 		.arg(format!("--manifest-path={}", manifest_path.display()))
 		.env("RUSTFLAGS", rustflags)
 		// Manually set the `CARGO_TARGET_DIR` to prevent a cargo deadlock (cargo locks a target dir
@@ -910,7 +910,10 @@ fn build_bloaty_blob(
 	if crate::build_std_required() {
 		// Unfortunately this is still a nightly-only flag, but FWIW it is pretty widely used
 		// so it's unlikely to break without a replacement.
-		build_cmd.arg("-Z").arg("build-std");
+		match target {
+			RuntimeTarget::Wasm => build_cmd.arg("-Z").arg("build-std"),
+			RuntimeTarget::Riscv => build_cmd.arg("-Z").arg("build-std=core,alloc")
+		};
 		if !cargo_cmd.supports_nightly_features() {
 			build_cmd.env("RUSTC_BOOTSTRAP", "1");
 		}
@@ -932,10 +935,8 @@ fn build_bloaty_blob(
 	}
 
 	let blob_name = get_blob_name(target, &manifest_path);
-	let target_directory = project
-		.join("target")
-		.join(target.rustc_target())
-		.join(blob_build_profile.directory());
+	let target_directory =
+		project.join("target").join(target.value()).join(blob_build_profile.directory());
 	match target {
 		RuntimeTarget::Riscv => {
 			let elf_path = target_directory.join(&blob_name);

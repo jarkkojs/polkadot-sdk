@@ -21,6 +21,7 @@
 **/hfuzz_target/
 **/hfuzz_workspace/
 **/node_modules
+**/rusty-tags.vi
 **/target/
 **/wip/*.stderr
 **/__pycache__/
